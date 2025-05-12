@@ -14,6 +14,7 @@ void mayo_secure_free(void *mem, size_t size) {
         // tells the compiler not to optimize away accesses to memset_func, since its value might change externally or has side effects.
         // "optimize away" means:
         // The compiler removes or skips code during optimization because it thinks the code has no effect on the program's outcome
+        // usually done for sensitive data
         memset_func(mem, 0, size);
         free(mem);
     }
