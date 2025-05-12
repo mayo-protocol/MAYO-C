@@ -7,7 +7,13 @@
 void mayo_secure_free(void *mem, size_t size) {
     if (mem) {
         typedef void *(*memset_t)(void *, int, size_t);
+        // function pointer definition, any function with the same signature can be set to memset_t
         static volatile memset_t memset_func = memset;
+        // static restricts scope to the current file
+        // volatile prevents compiler optimization
+        // tells the compiler not to optimize away accesses to memset_func, since its value might change externally or has side effects.
+        // "optimize away" means:
+        // The compiler removes or skips code during optimization because it thinks the code has no effect on the program's outcome
         memset_func(mem, 0, size);
         free(mem);
     }
