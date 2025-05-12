@@ -86,6 +86,7 @@ static int example_mayo(const mayo_params_t* p) {
     //The implementation performs Mayo.verify().
     //If the signature verification succeeded, the recovered message is stored in msg2
     //&msglen is pointer to the length of message
+    //It might be so that the msglen is the max buffer size initially, but it will be updated to the actual length of the recovered message
     //Keys provided is a compact public key.
     //The caller is responsible to allocate sufficient memory to hold m.
     printf("mayo_open (with correct signature) -> ");
@@ -101,6 +102,7 @@ static int example_mayo(const mayo_params_t* p) {
     //MAYO_VERIFY
     //If the signature verification succeeded, returns 0, otherwise 1.
     //Key provided is a compact public key.
+    //assumes the caller has the message, and just wants to verify the signature
     printf("mayo_verify (with correct signature) -> ");
     res = mayo_verify(p, msg, msglen, sig, pk);
     if (res != MAYO_OK) {
