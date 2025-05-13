@@ -1,4 +1,17 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-#define F_TAIL_LEN 4    /* Length of the field extension defining polynomial tail */
+
+/**
+ * Field defining polynomial tails for each parameter set
+ * Format: coefficients of the polynomial after the highest degree term
+ */
+#define F_TAIL_64                                                              \
+  { 8, 0, 2, 8 } /* f(z) =  z^64 + x^3*z^3 + x*z^2 + x^3 */
+#define F_TAIL_78                                                              \
+  { 8, 1, 1, 0 } /* f(z) =  z^78 + z^2 + z + x^3 */
+#define F_TAIL_108                                                             \
+  { 8, 0, 1, 7 } /* f(z) =  z^108 + (x^2 + x + 1)*z^3 + z^2 + x^3 */
+#define F_TAIL_142                                                             \
+  { 4, 0, 8, 1 } /* f(z) =  z^142 + z^3 + x^3*z^2 + x^2 */dentifier: Apache-2.0
 
 #ifndef MAYO_H
 #define MAYO_H
@@ -6,15 +19,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+/**
+ * MAYO parameter sets macros - These define the polynomial to use for each MAYO variant
+ * For example, MAYO_1 uses a field extension with polynomial z^78 + z^2 + z + x^3
+ */
 #define F_TAIL_LEN 4
 #define F_TAIL_64                                                              \
-  { 8, 0, 2, 8 } // f(z) =  z^64 + x^3*z^3 + x*z^2 + x^3
+  { 8, 0, 2, 8 } /* f(z) =  z^64 + x^3*z^3 + x*z^2 + x^3 */
 #define F_TAIL_78                                                              \
-  { 8, 1, 1, 0 } // f(z) =  z^78 + z^2 + z + x^3
+  { 8, 1, 1, 0 } /* f(z) =  z^78 + z^2 + z + x^3 */
 #define F_TAIL_108                                                             \
-  { 8, 0, 1, 7 } // f(z) =  z^108 + (x^2 + x + 1)*z^3 + z^2 + x^3
+  { 8, 0, 1, 7 } /* f(z) =  z^108 + (x^2 + x + 1)*z^3 + z^2 + x^3 */
 #define F_TAIL_142                                                             \
-  { 4, 0, 8, 1 } // f(z) =  z^142 + z^3 + x^3*z^2 + x^2
+  { 4, 0, 8, 1 } /* f(z) =  z^142 + z^3 + x^3*z^2 + x^2 */
 
 #define MAYO_1_name "MAYO_1"
 #define MAYO_1_n 86
@@ -122,6 +139,7 @@
 
 #define PARAM_JOIN2_(a, b) a##_##b
 #define PARAM_JOIN2(a, b) PARAM_JOIN2_(a, b)
+/* Get a specific parameter value for the current MAYO variant by appending the suffix */
 #define PARAM_NAME(end) PARAM_JOIN2(MAYO_VARIANT, end)
 
 #if defined(MAYO_VARIANT)
@@ -261,40 +279,41 @@ static const unsigned char f_tail[] = PARAM_NAME(f_tail);
 
 /**
  * Struct defining MAYO parameters
+ * This structure contains all the parameter values needed to define a specific MAYO variant
  */
 typedef struct {
-    int m;
-    int n;
-    int o;
-    int k;
-    int q;
-    const unsigned char *f_tail;
-    int m_bytes;
-    int O_bytes;
-    int v_bytes;
-    int r_bytes;
-    int R_bytes;
-    int P1_bytes;
-    int P2_bytes;
-    int P3_bytes;
-    int csk_bytes;
-    int cpk_bytes;
-    int sig_bytes;
-    int salt_bytes;
-    int sk_seed_bytes;
-    int digest_bytes;
-    int pk_seed_bytes;
-    int m_vec_limbs;
-    const char *name;
+    int m;                      /* Number of equations in the system (size of public matrix) */
+    int n;                      /* Total number of variables */
+    int o;                      /* Number of Oil variables */
+    int k;                      /* Number of field extensions in the oil space */
+    int q;                      /* Field size (always 16 for MAYO) */
+    const unsigned char *f_tail; /* Field extension defining polynomial tail */
+    int m_bytes;                /* Number of bytes needed to represent m field elements */
+    int O_bytes;                /* Number of bytes for oil submatrix */
+    int v_bytes;                /* Number of bytes for vinegar variables */
+    int r_bytes;                /* Number of bytes for r value */
+    int R_bytes;                /* Number of bytes for R value */
+    int P1_bytes;               /* Number of bytes for P1 matrix */
+    int P2_bytes;               /* Number of bytes for P2 matrix */
+    int P3_bytes;               /* Number of bytes for P3 matrix */
+    int csk_bytes;              /* Size of compact secret key in bytes */
+    int cpk_bytes;              /* Size of compact public key in bytes */
+    int sig_bytes;              /* Size of signature in bytes */
+    int salt_bytes;             /* Size of salt in bytes */
+    int sk_seed_bytes;          /* Size of secret key seed in bytes */
+    int digest_bytes;           /* Size of hash digest in bytes */
+    int pk_seed_bytes;          /* Size of public key seed in bytes */
+    int m_vec_limbs;            /* Number of 64-bit limbs for vectors of size m */
+    const char *name;           /* String identifier of the parameter set */
 } mayo_params_t;
 
 typedef struct sk_t {
-    uint64_t p[P1_LIMBS_MAX + P2_LIMBS_MAX];
-    uint8_t O[V_MAX*O_MAX];
+    uint64_t p[P1_LIMBS_MAX + P2_LIMBS_MAX];  /* Matrices P1 and P2 of the expanded secret key */
+    uint8_t O[V_MAX*O_MAX];                   /* Oil subspace matrix for the expanded secret key */
 } sk_t;
 
 typedef struct pk_t {
-    uint64_t p[P1_LIMBS_MAX + P2_LIMBS_MAX + P3_LIMBS_MAX];
+    uint64_t p[P1_LIMBS_MAX + P2_LIMBS_MAX + P3_LIMBS_MAX]; /* All matrices P1, P2, P3 of the expanded public key */
 } pk_t;
 
 /**
@@ -310,24 +329,42 @@ extern const mayo_params_t MAYO_5;
 /**
  * Status codes
  */
-#define MAYO_OK 0
-#define MAYO_ERR 1
+#define MAYO_OK 0     /* Operation completed successfully */
+#define MAYO_ERR 1    /* Operation failed (e.g., verification failure) */
 
 /**
  * Mayo keypair generation.
  *
  * The implementation corresponds to Mayo.CompactKeyGen() in the Mayo spec.
+ * Generates a new keypair for the Mayo signature scheme with the specified parameter set.
  * The caller is responsible to allocate sufficient memory to hold pk and sk.
  *
- * @param[in] p Mayo parameter set
- * @param[out] pk Mayo public key
- * @param[out] sk Mayo secret key
- * @return int status code
+ * The public key can be used for signature verification (mayo_verify, mayo_open).
+ * The secret key can be used for signature generation (mayo_sign).
+ *
+ * @param[in] p Mayo parameter set (MAYO_1, MAYO_2, MAYO_3, or MAYO_5)
+ * @param[out] pk Buffer to store the generated public key (size: PARAM_cpk_bytes(p))
+ * @param[out] sk Buffer to store the generated secret key (size: PARAM_csk_bytes(p))
+ * @return int MAYO_OK on success, or an error code
  */
 #define mayo_keypair MAYO_NAMESPACE(mayo_keypair)
 int mayo_keypair(const mayo_params_t *p, unsigned char *pk, unsigned char *sk);
 
 #define mayo_sign_signature MAYO_NAMESPACE(mayo_sign_signature)
+/**
+ * MAYO signature generation without message concatenation.
+ * 
+ * This generates only the signature without appending the message.
+ * The signature can then be verified using mayo_verify.
+ *
+ * @param[in] p Mayo parameter set
+ * @param[out] sig Signature buffer (should be at least PARAM_sig_bytes bytes)
+ * @param[out] siglen Pointer to the length of the signature
+ * @param[in] m Message to be signed
+ * @param[in] mlen Message length
+ * @param[in] csk Compacted secret key
+ * @return int status code (MAYO_OK on success)
+ */
 int mayo_sign_signature(const mayo_params_t *p, unsigned char *sig,
               size_t *siglen, const unsigned char *m,
               size_t mlen, const unsigned char *csk);
@@ -336,16 +373,24 @@ int mayo_sign_signature(const mayo_params_t *p, unsigned char *sig,
  * MAYO signature generation.
  *
  * The implementation performs Mayo.expandSK() + Mayo.sign() in the Mayo spec.
- * Keys provided is a compacted secret keys.
+ * This function signs a message using the provided secret key, generating a signature
+ * that is concatenated with the original message.
+ * 
+ * The process involves:
+ * 1. Expanding the compact secret key into its internal representation
+ * 2. Generating a cryptographic signature for the message
+ * 3. Appending the signature to the message in the output buffer
+ *
+ * Keys provided is a compacted secret key.
  * The caller is responsible to allocate sufficient memory to hold sm.
  *
  * @param[in] p Mayo parameter set
- * @param[out] sm Signature concatenated with message
- * @param[out] smlen Pointer to the length of sm
+ * @param[out] sm Buffer to store signature concatenated with message (size: PARAM_sig_bytes(p) + mlen)
+ * @param[out] smlen Pointer to receive the total length of signature and message
  * @param[in] m Message to be signed
  * @param[in] mlen Message length
  * @param[in] sk Compacted secret key
- * @return int status code
+ * @return int MAYO_OK on success, or an error code
  */
 #define mayo_sign MAYO_NAMESPACE(mayo_sign)
 int mayo_sign(const mayo_params_t *p, unsigned char *sm,
@@ -355,17 +400,21 @@ int mayo_sign(const mayo_params_t *p, unsigned char *sm,
 /**
  * Mayo open signature.
  *
- * The implementation performs Mayo.verify(). If the signature verification succeeded, the original message is stored in m.
+ * The implementation performs Mayo.verify(). 
+ * If the signature verification succeeded, the recovered message is stored in m.
  * Keys provided is a compact public key.
  * The caller is responsible to allocate sufficient memory to hold m.
  *
+ * This function is useful when the message is embedded within the signature+message
+ * structure and needs to be verified and extracted in one operation.
+ *
  * @param[in] p Mayo parameter set
- * @param[out] m Message stored if verification succeeds
- * @param[out] mlen Pointer to the length of m
- * @param[in] sm Signature concatenated with message
- * @param[in] smlen Length of sm
+ * @param[out] m Buffer to store the recovered message if verification succeeds
+ * @param[out] mlen Pointer to receive the length of the recovered message
+ * @param[in] sm Buffer containing signature concatenated with message
+ * @param[in] smlen Length of the signature+message buffer
  * @param[in] pk Compacted public key
- * @return int status code
+ * @return int MAYO_OK on successful verification, MAYO_ERR on failure
  */
 #define mayo_open MAYO_NAMESPACE(mayo_open)
 int mayo_open(const mayo_params_t *p, unsigned char *m,
@@ -427,11 +476,11 @@ int mayo_expand_sk(const mayo_params_t *p, const unsigned char *csk,
  * Keys provided is a compact public key.
  *
  * @param[in] p Mayo parameter set
- * @param[out] m Message stored if verification succeeds
- * @param[out] mlen Pointer to the length of m
- * @param[in] sig Signature
+ * @param[in] m Message to be verified against the signature
+ * @param[in] mlen Length of the message
+ * @param[in] sig Signature to verify (without the message)
  * @param[in] pk Compacted public key
- * @return int 0 if verification succeeded, 1 otherwise.
+ * @return int MAYO_OK (0) if verification succeeded, MAYO_ERR (1) otherwise
  */
 #define mayo_verify MAYO_NAMESPACE(mayo_verify)
 int mayo_verify(const mayo_params_t *p, const unsigned char *m,
